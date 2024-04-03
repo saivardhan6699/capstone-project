@@ -1,0 +1,81 @@
+from PIL import Image, ImageDraw, ImageFont
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import os
+
+def generate_certificate(user_name, certificate_path):
+    # Load the certificate template image
+    certificate_image = Image.open(certificate_path)
+    
+    # Initialize drawing context
+    draw = ImageDraw.Draw(certificate_image)
+    
+    # Use default font
+    font_size = 72  # Adjust font size as needed
+    font = ImageFont.load_default()
+    
+    # Get bounding box for the user's name
+    text_bbox = draw.textbbox((0, 0), user_name, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+    
+    # Calculate position to center the text
+    position = ((certificate_image.width - text_width) / 2, (certificate_image.height - text_height) / 2)
+    
+    # Draw the user's name on the certificate
+    draw.text(position, user_name, fill="black", font=font, font_size="50")
+    
+    # Save the certificate
+    certificate_image.save("generated_certificate.jpg")
+    print("Certificate generated successfully!")
+    return "generated_certificate.jpg"
+
+def send_email(sender_email, sender_password, receiver_email, attachment_path):
+    # Email configuration
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    
+    # Create message container
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = "Certificate of Achievement"
+    
+    # Attach certificate to email
+    with open(attachment_path, "rb") as attachment:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(attachment.read())
+    encoders.encode_base64(part)
+    part.add_header("Content-Disposition", f"attachment; filename= {os.path.basename(attachment_path)}")
+    msg.attach(part)
+    
+    # Send email
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+    print("Email sent successfully!")
+
+# Prompt the user to enter their name and email
+user_name = input("Please enter your name: ")
+receiver_email = input("Please enter your email address: ")
+
+# Path to the certificate template image
+certificate_path = "/content/csa0863_page-0001.jpg"
+
+# Generate certificate with the user's name
+attachment_path = generate_certificate(user_name, certificate_path)
+
+# Email configuration
+sender_email = "saivardhankalavala@gmail.com"
+sender_password = "zqbx xdzr daai pvnb"  # Replace with your Gmail app password
+
+# Send email with the certificate attached
+send_email(sender_email, sender_password, receiver_email, attachment_path)
+
+
+
+
+C:\Users\DELL\Downloads\csa0863_page-0001.jpg
